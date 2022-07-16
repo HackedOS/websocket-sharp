@@ -50,6 +50,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using WebSocketSharp.Net;
 using WebSocketSharp.Net.WebSockets;
 
@@ -777,26 +778,28 @@ namespace WebSocketSharp
     #endregion
 
     #region Public Events
-
+    
+    public delegate System.Threading.Tasks.Task AsyncEventHandler<TEventArgs>(object sender, TEventArgs e) where TEventArgs : System.EventArgs;
+    
     /// <summary>
     /// Occurs when the WebSocket connection has been closed.
     /// </summary>
-    public event EventHandler<CloseEventArgs> OnClose;
+    public event AsyncEventHandler<CloseEventArgs> OnClose;
 
     /// <summary>
     /// Occurs when the <see cref="WebSocket"/> gets an error.
     /// </summary>
-    public event EventHandler<ErrorEventArgs> OnError;
+    public event AsyncEventHandler<ErrorEventArgs> OnError;
 
     /// <summary>
     /// Occurs when the <see cref="WebSocket"/> receives a message.
     /// </summary>
-    public event EventHandler<MessageEventArgs> OnMessage;
+    public event AsyncEventHandler<MessageEventArgs> OnMessage;
 
     /// <summary>
     /// Occurs when the WebSocket connection has been established.
     /// </summary>
-    public event EventHandler OnOpen;
+    public event AsyncEventHandler OnOpen;
 
     #endregion
 
@@ -1604,7 +1607,8 @@ namespace WebSocketSharp
         e = _messageEventQueue.Dequeue ();
       }
 
-      ThreadPool.QueueUserWorkItem (state => messages (e));
+      Task.Run (
+        async () => await messages (e)).ConfigureAwait(false);
     }
 
     private void open ()
